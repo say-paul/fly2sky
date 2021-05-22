@@ -2,10 +2,10 @@
 #define Mobs 6
 
 #include <MPU9250.h>
-#include <TinyEKF.h>
-#include <TinyGPS++.h>
+#include <TinyEKF.h>             /* from https://github.com/simondlevy/TinyEKF */
+#include <TinyGPS++.h>           /* from https://github.com/mikalhart/TinyGPSPlus */
 #include <SoftwareSerial.h>
-#include <SFE_BMP180.h>
+#include <SFE_BMP180.h>          /*from https://github.com/LowPowerLab/SFE_BMP180 */
 #include <Wire.h>
 
 //Sensors
