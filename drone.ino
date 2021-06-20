@@ -1,15 +1,15 @@
-#define Nsta 3  
-#define Mobs 6
-
+#define Nsta 9 /* pitch,roll,yaw,heading,lat,long,alt */
+#define Mobs 13 /* gyro X 3,accel X 3,mag X 3,gps X 3,baro */
+ 
 #include <MPU9250.h>
 #include <TinyEKF.h>             /* from https://github.com/simondlevy/TinyEKF */
 #include <TinyGPS++.h>           /* from https://github.com/mikalhart/TinyGPSPlus */
-#include <SoftwareSerial.h>
-#include <SFE_BMP180.h>          /*from https://github.com/LowPowerLab/SFE_BMP180 */
 #include <Wire.h>
+#include <Adafruit_BMP085.h>
 
 //Sensors
 #define mpu9250Add 0x68
+
 
 
 
@@ -70,14 +70,28 @@ class Fuser : public TinyEKF {
             F[0][0] = 1;
             F[1][1] = 1;
             F[2][2] = 1;
+            F[3][3] = 1;
+            F[4][4] = 1;
+            F[5][5] = 1;
+            F[6][6] = 1;
+            F[7][7] = 1;
+            F[8][8] = 1;
 
             // Measurement function simplifies the relationship between state and sensor readings for convenience.
-            hx[0] = this->x[0]; // Barometric pressure from previous state
-            hx[1] = this->x[1]; // Baro temperature from previous state
-            hx[2] = this->x[2]; // LM35 temperature from previous state
+            hx[0] = this->x[0];
+            hx[1] = this->x[1];
+            hx[2] = this->x[2];
             hx[3] = this->x[0];
             hx[4] = this->x[1];
             hx[5] = this->x[2];
+            hx[6] = this->x[3];
+            hx[7] = this->x[4];
+            hx[8] = this->x[5];
+            hx[9] = this->x[6];
+            hx[10] = this->x[7];
+            hx[11] = this->x[8];
+            hx[12] = this->x[6];
+            
 
             // Jacobian of measurement function
             H[0][0] = 1;        // Barometric pressure from previous state
@@ -90,34 +104,49 @@ class Fuser : public TinyEKF {
         }
 };
 
-static const int RXPin = 4, TXPin = 3;
-static const uint32_t GPSBaud = 4800;
+static const int RXPin = 5, TXPin = 4;
+static const uint32_t GPSBaud = 9600;
 
 //objects
-MPU9250 mpu; // You can also use MPU9250 as is
+MPU9250 mpu;
 IMU gyro;
 IMU accel;
 Heading mag;
 Position gpsPos;
 TinyGPSPlus gps;
-SoftwareSerial ss(RXPin,TXPin);
-SFE_BMP180 pressure;
+Adafruit_BMP085 bmp;
 double baseline,T,baroAlt;
+bool success = false;
+
+double ReadBaro() {
+  T = bmp.readTemperature();
+  return bmp.readAltitude(bmp.readPressure());
+}
 
 void setup() {
-    baseline = 0.0;
-    Serial.begin(115200);
+    Wire.setSCL(1);//gp1 
+    Wire.setSDA(0);//gp0
+    Serial.begin(9600);
     Wire.begin();
-    ss.begin(GPSBaud);
+    Serial2.setRX(RXPin);
+    Serial2.setTX(TXPin);
+    Serial2.begin(9600);
     delay(2000);
    
-   if (!mpu.setup(mpu9250Add)) {  // change to your own address
-        while (1) {
-            Serial.println("MPU connection failed. Please check your connection with `connection_check` example.");
-            delay(5000);
+   while (!success) { 
+//    if (!mpu.setup(mpu9250Add)) {
+//              Serial.println("MPU connection failed. Please check your connection with `connection_check` example.");
+//      }
+    if (bmp.begin()) {
+      Serial.println("BMP180 init Success");
+      delay(2000);
+      baseline = ReadBaro();
+      success = true;
+        } else {
+          Serial.println("BMP180 init Failed");
         }
+     delay(2000);
     }
-//    CalibrateIMU();
 }
 
 void ReadImu () {
@@ -130,7 +159,6 @@ void ReadImu () {
   mag.x = mpu.getMagX();
   mag.y = mpu.getMagY();
   mag.z = mpu.getMagZ();
-  
 }
 
 void ReadGPS () {
@@ -153,45 +181,29 @@ void CalibrateIMU () {
     Serial.println("Done.");
 }
 
-double ReadBaro (double *P) {
-  char status;
-    status = pressure.startTemperature();
-    if (status != 0)
-    {
-      status = pressure.startPressure(3);
-      if (status != 0)
-      { 
-        status = pressure.getPressure(*P,T);
-        if (status != 0)
-        {
-          return((double)(pressure.altitude(*P,baseline),2));
-        }
-      }
-    }
-    return *P;
-}
-void startInit () {
-  baseline = ReadBaro(&baseline);
+
+void printData () {
+//  Serial.print("Gyro-P");     Serial.print(gyro.pitch);      Serial.print("   ");
+//Serial.print("Gyro-R:");     Serial.print(gyro.roll);      Serial.print("    ");
+//Serial.print("Gyro-Y:");     Serial.print(gyro.yaw);      Serial.print("   ");
+//Serial.print("Accel-P:");     Serial.print(gyro.pitch);      Serial.print("   ");
+//Serial.print("Accel-R:");     Serial.print(gyro.roll);      Serial.print("    ");
+//Serial.print("Accel-Y:");     Serial.print(gyro.yaw);      Serial.print("   ");
+//Serial.print("Mag-X:");     Serial.print(mag.x);      Serial.print("   ");
+//Serial.print("Mag-Y:");     Serial.print(mag.y);      Serial.print("    ");
+//Serial.print("Mag-Z:");     Serial.print(mag.z);      Serial.print("\n");
+//Serial.print("Gps-X:");     Serial.print(gpsPos.x);      Serial.print("   ");
+//Serial.print("Gps-Y:");     Serial.print(gpsPos.y);      Serial.print("    ");
+//Serial.print("Gps-Z:");     Serial.print(gpsPos.z);      Serial.print("   ");
+Serial.print("Baro-Z: ");     Serial.print(baroAlt);      Serial.print(" ");
+Serial.print("Temp: ");     Serial.print(T);      Serial.print("\n");
 }
 
 void loop() {
-        ReadImu();
-        ReadGPS();
-        baroAlt = ReadBaro(&baroAlt) - baseline;
-    
-Serial.print("Gyro-P");     Serial.print(gyro.pitch);      Serial.print("   ");
-Serial.print("Gyro-R:");     Serial.print(gyro.roll);      Serial.print("    ");
-Serial.print("Gyro-Y:");     Serial.print(gyro.yaw);      Serial.print("   ");
-Serial.print("Accel-P:");     Serial.print(gyro.pitch);      Serial.print("   ");
-Serial.print("Accel-R:");     Serial.print(gyro.roll);      Serial.print("    ");
-Serial.print("Accel-Y:");     Serial.print(gyro.yaw);      Serial.print("   ");
-Serial.print("Mag-X:");     Serial.print(mag.x);      Serial.print("   ");
-Serial.print("Mag-Y:");     Serial.print(mag.y);      Serial.print("    ");
-Serial.print("Mag-Z:");     Serial.print(mag.z);      Serial.print("   ");
-Serial.print("Gps-X:");     Serial.print(gpsPos.x);      Serial.print("   ");
-Serial.print("Gps-Y:");     Serial.print(gpsPos.y);      Serial.print("    ");
-Serial.print("Gps-Z:");     Serial.print(gpsPos.z);      Serial.print("   ");
-Serial.print("Baro-Z:");     Serial.print(baroAlt);      Serial.print("\n");
+//        ReadImu();
+//        ReadGPS();
+        baroAlt = ReadBaro() - baseline;
+        
 
-
+       printData();
 }
