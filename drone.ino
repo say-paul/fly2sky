@@ -28,7 +28,7 @@ struct Heading {
 struct Position {
   float x;
   float y;
-  float z;
+  int z;
 };
 
 struct INS {
@@ -104,19 +104,21 @@ class Fuser : public TinyEKF {
         }
 };
 
-static const int RXPin = 5, TXPin = 4;
+static const int RXPin = 4, TXPin = 5;
 static const uint32_t GPSBaud = 9600;
 
 //objects
 MPU9250 mpu;
-IMU gyro;
-IMU accel;
-Heading mag;
+IMU attitude;
 Position gpsPos;
 TinyGPSPlus gps;
 Adafruit_BMP085 bmp;
 double baseline,T,baroAlt;
 bool success = false;
+bool enableGPS = true;
+float timer = millis();
+String rtc = "";
+
 
 double ReadBaro() {
   T = bmp.readTemperature();
@@ -124,19 +126,23 @@ double ReadBaro() {
 }
 
 void setup() {
+    Serial.begin(9600);
+
+    Serial2.setRX(5);
+    Serial2.setTX(4);
+    Serial2.begin(9600);
     Wire.setSCL(1);//gp1 
     Wire.setSDA(0);//gp0
-    Serial.begin(9600);
     Wire.begin();
-    Serial2.setRX(RXPin);
-    Serial2.setTX(TXPin);
-    Serial2.begin(9600);
     delay(2000);
    
    while (!success) { 
-//    if (!mpu.setup(mpu9250Add)) {
-//              Serial.println("MPU connection failed. Please check your connection with `connection_check` example.");
-//      }
+    if (mpu.setup(0x68)) {
+              Serial.println("MPU init Sucess");
+              success = true;
+      } else {
+               success = false;
+      }
     if (bmp.begin()) {
       Serial.println("BMP180 init Success");
       delay(2000);
@@ -144,27 +150,44 @@ void setup() {
       success = true;
         } else {
           Serial.println("BMP180 init Failed");
+          success = false;
         }
      delay(2000);
     }
 }
 
-void ReadImu () {
-  gyro.pitch = mpu.getGyroX();
-  gyro.roll = mpu.getGyroY();
-  gyro.yaw = mpu.getGyroZ();
-  accel.pitch = mpu.getAccX();
-  accel.roll = mpu.getAccY();
-  accel.yaw = mpu.getAccZ();
-  mag.x = mpu.getMagX();
-  mag.y = mpu.getMagY();
-  mag.z = mpu.getMagZ();
+void ReadImu() {
+  if (mpu.update()) {
+  attitude.pitch = mpu.getPitch();
+  attitude.roll = mpu.getRoll();
+  attitude.yaw = mpu.getYaw();
+  }
+  
 }
 
-void ReadGPS () {
-  gpsPos.z = (double)(gps.altitude.meters(), gps.altitude.isValid(), 7, 2);
-  gpsPos.y = (float)(gps.location.lng(), gps.location.isValid(), 12, 6);
-  gpsPos.x = (float)(gps.location.lat(), gps.location.isValid(), 11, 6);
+void ReadGPS() {
+ while (Serial2.available() > 0)
+     Serial.print("Serial avialable \n");
+      if (gps.encode(Serial2.read())) {
+         Serial.print("Serial reading \n");
+        displayGpsDetails();
+          if (gps.location.isValid()) {
+            gpsPos.z = gps.altitude.feet();
+            gpsPos.y = gps.location.lng();
+            gpsPos.x = gps.location.lat();
+            
+          } else {
+            Serial.print("Invalid \n");
+          }
+      
+      if (millis()-timer > 5000 && gps.charsProcessed() < 10)
+          {
+            Serial.printf("No GPS detected: check wiring. \n");
+            timer = millis();
+          }
+         
+      }
+  
 }
 
 void CalibrateIMU () {
@@ -181,29 +204,100 @@ void CalibrateIMU () {
     Serial.println("Done.");
 }
 
-
-void printData () {
-//  Serial.print("Gyro-P");     Serial.print(gyro.pitch);      Serial.print("   ");
-//Serial.print("Gyro-R:");     Serial.print(gyro.roll);      Serial.print("    ");
-//Serial.print("Gyro-Y:");     Serial.print(gyro.yaw);      Serial.print("   ");
-//Serial.print("Accel-P:");     Serial.print(gyro.pitch);      Serial.print("   ");
-//Serial.print("Accel-R:");     Serial.print(gyro.roll);      Serial.print("    ");
-//Serial.print("Accel-Y:");     Serial.print(gyro.yaw);      Serial.print("   ");
-//Serial.print("Mag-X:");     Serial.print(mag.x);      Serial.print("   ");
-//Serial.print("Mag-Y:");     Serial.print(mag.y);      Serial.print("    ");
-//Serial.print("Mag-Z:");     Serial.print(mag.z);      Serial.print("\n");
-//Serial.print("Gps-X:");     Serial.print(gpsPos.x);      Serial.print("   ");
-//Serial.print("Gps-Y:");     Serial.print(gpsPos.y);      Serial.print("    ");
-//Serial.print("Gps-Z:");     Serial.print(gpsPos.z);      Serial.print("   ");
-Serial.print("Baro-Z: ");     Serial.print(baroAlt);      Serial.print(" ");
-Serial.print("Temp: ");     Serial.print(T);      Serial.print("\n");
+void PrintData () {
+Serial.print("MPU-PITCH:");     Serial.print(attitude.pitch,2);      Serial.print("   ");
+Serial.print("MPU-ROLL:");     Serial.print(attitude.roll,2);      Serial.print("    ");
+Serial.print("MPU-YAW:");     Serial.print(attitude.yaw,2);      Serial.print("   ");
+if (enableGPS) {
+Serial.print("gps-lat:");     Serial.print(gpsPos.x,6);      Serial.print("   ");
+Serial.print("gps-lng:");     Serial.print(gpsPos.y,6);      Serial.print("    ");
+Serial.print("gps-alt:");     Serial.print(gpsPos.z);      Serial.print("   ");
+}
+Serial.print("Baro-Z: ");     Serial.print(baroAlt);      Serial.print(" ft  ");
+Serial.print("Time: ");     Serial.print(rtc);      Serial.print("  ");
+Serial.print("Temp:");     Serial.print(T);      Serial.print("\n");
 }
 
+void displayGpsDetails() {
+        Serial.print(gps.location.lat(), 6);
+        Serial.print("\t");
+        Serial.print(gps.location.lng(), 6);
+        Serial.print("\t");
+        Serial.print(gps.altitude.feet());
+        Serial.print("\t");
+        Serial.print(gps.speed.kmph());
+        Serial.print("\t");
+        Serial.print(gps.course.deg());
+        Serial.print("\t");
+        Serial.print(gps.hdop.value());
+        Serial.print("\t");  
+        Serial.println(gps.satellites.value());
+        Serial.print("gps-lat:");     Serial.print(gps.location.lat());      Serial.print("    ");
+        Serial.print("gps-lng:");     Serial.print(gps.location.lng());      Serial.print("   ");
+        Serial.print("GPS-ALT: ");     Serial.print(gps.altitude.feet());      Serial.print(" ft ");
+
+  }
+
+
+
 void loop() {
-//        ReadImu();
-//        ReadGPS();
+        ReadImu();
+        if (enableGPS) {
+          while (Serial2.available() > 0)
+              if (gps.encode(Serial2.read()))
+                displayInfo();
+          
+            if (millis() > 5000 && gps.charsProcessed() < 10)
+            {
+              Serial.println(F("No GPS detected: check wiring."));
+            }
+        }
         baroAlt = ReadBaro() - baseline;
         
+        PrintData();
+}
 
-       printData();
+
+
+void displayInfo()
+{
+  Serial.print(F("Location: ")); 
+  if (gps.location.isValid())
+  {
+    gpsPos.x = gps.location.lat();
+    gpsPos.y = gps.location.lng();
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps.location.lng(), 6);
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.print(F("  Date/Time: "));
+  if (gps.date.isValid())
+  {
+    Serial.print(gps.date.month());
+    Serial.print(F("/"));
+    Serial.print(gps.date.day());
+    Serial.print(F("/"));
+    Serial.print(gps.date.year());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.print(F(" "));
+  if (gps.time.isValid())
+  {                 
+     rtc = gps.time.value();
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.println();
 }
