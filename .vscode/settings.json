@@ -1,0 +1,14 @@
+{
+    "cmake.environment" : {
+        "PICO_SDK_PATH":"../../pico-sdk"    
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.errorSquiggles": "Enabled",
+    "files.associations": {
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "string": "cpp",
+        "iostream": "cpp",
+        "iosfwd": "cpp"
+    },
+}
