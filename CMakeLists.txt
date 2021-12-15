@@ -7,7 +7,7 @@ project(fly2sky C CXX ASM)
 pico_sdk_init()
 
 add_executable(${PROJECT_NAME}
-    main.c
+    main.cpp
 )
 pico_add_extra_outputs(${PROJECT_NAME})
 
