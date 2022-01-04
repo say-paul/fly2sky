@@ -1,0 +1,33 @@
+The object is to define the working of the drone, whico form now on will be refreed as Fs2.
+
+Fs2 is a bi-copter (VTOL), having 2 BLDC motor mounted on top of 2 Servo.
+The device will be powered by a 3s(12V) battery and will have 5V 2A and 3.3V 1A power line.
+2 ESC will control the respective motors.Fs2 will have 9 axis DOF IMU(9250),
+barometer(BMP180), microcontroller (Pi Pico) with built in temperature sensor, NRF240L for
+radio communication.
+
+Additional flight computer will be there to program the flight controller easily, 
+and provide realtime visual feed back at time of flight.
+
+Ground control(to be refered as controller) will be a radio tranceiver, having two 2-axis potentiometer 
+commonly known as joystick and 6 push buttons.
+
+Working Algorithm:
+
+1. Drone States: OFF,ON,Armed,Active,Hover,Landing.
+2. STATE OFF - Low-Power Radio on.
+3. Controller button sequence will transition state.
+4. STATE ON - Pico will get and stream steady signals from sensors and
+flight computer
+5. Controller button sequence will transition state.
+6. STATE Armed - Motor will start rotating till the net G reduced to certain [VALUE]
+7. [TAKEOFF] sequence / Throttle UP joystick will transition to ACTIVE.
+8. STATE Active - PID control will be active, Joystick sensitity can be adjusted by
+non-linear function. 
+9. STATE Hover - It can enter/exit from/to Active state only.When no drive input is recived 
+from controller it will enter into this mode.It will automatically disengage 
+when any controller dive input is recieved.
+10. STATE Landing - It will slowly decent, the speed will vary depending on the heigt,
+gradually decerasing as it reaches close to ground level eventually transitioning to Armed
+and ON state.This state can disengaged by force Controller input.
+

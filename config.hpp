@@ -1,10 +1,13 @@
+#include <Wire.h>
 // PIN connection with peripherals.
 
 
 // PIN CONFIGS
+
 #define NRF240_CE_PIN 20
 #define NRF240_CSN_PIN 17
-#define IMU_ADDRESS 0x68
+#define MPU_ADDRESS 0x68
+
 
 
 struct transmissionData {
@@ -28,4 +31,6 @@ struct tuning {
     short int joystickSensitivity;
     short int obstructionWarning;
     short int maxCruiseVelocity;
+    short int maxAcceleration;
 };
+
