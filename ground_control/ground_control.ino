@@ -20,7 +20,6 @@ void initiallizeRadio() {
     radio.setDataRate(RF24_2MBPS);
     radio.setAutoAck(false);
     radio.openReadingPipe(1, pipe);
-    radio.startListening();
     
 }
 void printData() {
@@ -46,13 +45,13 @@ void printData() {
 
 void recieveData(){
       // Start to listen
-    
+    radio.startListening();
     delay(10);
     while (radio.available()) {        
     radio.read(&rData, sizeof(dataTx));
     printData();
   }
-  // radio.stopListening();
+  radio.stopListening();
 }
 
 void setup() {
