@@ -90,7 +90,7 @@ bool readGPS() {
   // Serial.printf("%.6f,%.6f,%.2f\n",transmitData.gpsTx.lat,transmitData.gpsTx.lon,transmitData.gpsTx.velocity);
     if (transmitData.lat != TinyGPS::GPS_INVALID_F_ANGLE) {
       transmitData.valid = newData; 
-      transmitData.altTx = gps.f_altitugde();
+      transmitData.altTx = gps.f_altitude();
       transmitData.velocity = gps.f_speed_kmph();
       transmitData.sat = gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES ? 0 : gps.satellites();
     } else {
