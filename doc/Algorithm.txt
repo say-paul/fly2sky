@@ -14,7 +14,7 @@ commonly known as joystick and 6 push buttons.
 
 Working Algorithm:
 
-1. Drone States: OFF,ON,Armed,Active,Hover,Landing.
+1. Drone States: OFF,ON,Armed,Active,Hover,Landing,config == 0,1,2,3,4,5,6
 2. STATE OFF - Low-Power Radio on.
 3. Controller button sequence will transition state.
 4. STATE ON - Pico will get and stream steady signals from sensors and

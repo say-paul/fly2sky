@@ -3,7 +3,7 @@
         "PICO_SDK_PATH":"../../pico-sdk"    
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.errorSquiggles": "Enabled",
+    "C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
         "bitset": "cpp",
         "string_view": "cpp",
@@ -17,6 +17,7 @@
         "vector": "cpp",
         "initializer_list": "cpp",
         "ranges": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "future": "cpp"
     },
 }

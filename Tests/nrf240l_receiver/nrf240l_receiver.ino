@@ -10,7 +10,7 @@
 
 //arduino shield value (9,10)
 //pico controller (20,17)
-RF24 radio(20, 17);
+RF24 radio(9, 10);
 // Address to devices comunicate each other (same in both)
 const uint64_t pipe = 0xE8E8F0F0E1LL;
 // A variable to hold some info
