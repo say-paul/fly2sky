@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
+#include <Servo.h>
 // #include "ekf.h"
 
 short int state;
@@ -16,6 +17,9 @@ RF24 radio(NRF240_CE_PIN, NRF240_CSN_PIN);
 imuData imuD;
 dataTx transmitData;
 driveData dData;
+driveData pState;
+Servo servoL;
+Servo servoR;
 
 // Address to devices comunicate each other (same in both)
 const uint64_t pipe = 0xE8E8F0F0E1LL;
@@ -54,7 +58,6 @@ void initiallizeRadio() {
     radio.setChannel(100);
     radio.setPALevel(RF24_PA_MAX);
     radio.setDataRate(RF24_2MBPS);
-    radio.setAutoAck(false);
 }
 
 void readImu() {
@@ -132,13 +135,30 @@ void FilterData() {
 
 }
 
+void resetServo(){
+  servoL.write(int(SERVO_DEFAULT_POS));
+  servoR.write(int(SERVO_DEFAULT_POS));
+}
 
 bool recvData() {
-return false;
+  bool status = false;
+  radio.openReadingPipe(0, pipe);
+  radio.startListening();
+
+    delay(10);
+    while (radio.available()) {        
+        radio.read(&dData, sizeof(driveData));
+        status = true;
+        Serial.printf("transmission recieved . \n");
+    }
+    radio.stopListening();
+  return status;
 }
 
 void driveMotor(driveData gc) {
-
+  Serial.printf("trigerring servo.. \n");
+  servoL.write(int(SERVO_DEFAULT_POS)-gc.x);
+  servoR.write(int(SERVO_DEFAULT_POS)+gc.x);
 }
 
 void printData() {
@@ -163,12 +183,11 @@ void printData() {
 }
 
 void holdStable() {
-
+  resetServo();
 }
 
 void setup() {
-    pinMode(led, OUTPUT);
-    digitalWrite(led,HIGH);
+    
     Serial.begin(115200);
     Wire.setSDA(I2C_SDA);
     Wire.setSCL(I2C_SCL);
@@ -176,8 +195,13 @@ void setup() {
     Serial2.setRX(GPS_RX);
     Serial2.setTX(GPS_TX);
     Serial2.begin(9600);
+    servoL.attach(SERVO1);
+    servoR.attach(SERVO2);
     intiallizeImuBmp();
     initiallizeRadio();
+    resetServo();
+    pinMode(led, OUTPUT);
+    digitalWrite(led,HIGH);
 }
 
 
@@ -187,7 +211,7 @@ void loop() {
     FilterData();
     if (recvData()){
       driveMotor(dData);
-    }else {
+    } else {
       holdStable();
     }
     sendData();

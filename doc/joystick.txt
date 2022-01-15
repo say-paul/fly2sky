@@ -1,0 +1,66 @@
+This JoyStick Shield Module Robotics Control is an Uno compatible shield that allows you to turn an Arduino Uno or compatible into a game console or robotic controller. 3.3V to 5V Gamepad Joystick Shield Module Game Rocker Button Controller Expansion Board For Arduino Simulated Keyboard Mouse Module.
+
+The shield sits on top of your Arduino and turns it into a simple controller. 7 momentary push buttons ( 4 big buttons + 2 small buttons + joystick select button ) and a two-axis thumb joystick gives your Arduino functionality on the level of old Nintendo controllers.
+
+2-Axis Joystick:
+
+The X-Axis potentiometer of the joystick is connected to A0. The Y-Axis potentiometer is connected to A1. The analog inputs on a microcontroller read values over a range of 0-1023 (for typical 10-bit ADC inputs). The X-Axis and Y-Axis controls should read around 512 (midpoint) when the control is at rest. As the joystick is moved, one or both of the controls will register higher or lower values depending on how the control is being moved. The joystick also has a button K which is activated by pressing the joystick down. This button is connected to D8.
+
+Buttons:
+
+There are a total of 6 buttons on the board (not including the one on the joystick) labeled A-F. The 4 large buttons are typically used for up/down/left/right or similar functions. The two smaller buttons are typically used for less commonly used functions such as select or start since they are less accessible / less likely to be pressed accidentally. All buttons have pull-up resistors and pull to ground when pressed.
+
+    Button A Connects toD2
+    Button B Connects toD3
+    Button C Connects toD4
+    Button D Connects toD5
+    Button E Connects toD6
+    Button F Connects toD7
+
+
+Bluetooth Connector:
+
+The RX/TX lines are brought out to a separate 4-pin female header along with 3.3V and Ground. This can be used for connecting a 4-pin 3.3V Bluetooth device or a TTL serial device.
+
+I2C Connector:
+
+The I2C SDA and SCL lines are brought out to a separate 4-pin male header along with 5V and Ground. This is in addition to the normal A4/A5 location of these lines. This allows for easy attachment of I2C devices.
+
+nRF24L01 Connector:
+
+This connector allows a nRF24L01 RF transceiver module to be plugged in.
+2 x 4 Female Header
+
+    GND Ground.
+    VCC 3.3V
+    CE Connects toD9
+    CSN Connects toD10
+    SCK Connects toD13
+    MOSI Connects toD11
+    MISO Connects toD12
+    IRQ No Connection
+
+
+Nokia 5110 LCD Connector:
+
+This female header connector is designed to mount the Nokia 5110 LCD that was originally designed for Nokia phones and provides a 4884 pixel matrix.
+
+This interface occupies the sameD9-D13pins as the nRF24L01, so you cant use both at the same time.
+Interface Connector:
+
+This dual row yellow male header connector provides another point of access to all the buttons, joystick pots, 3.3V, 5V and Ground. The pin-out of this connector is labeled on the board to the left of the connector.
+
+
+Features :
+
+    NRF24L01 RF interface.
+    for Nokia 5110 LCD interface.
+    bluetooth interface I2C interface.
+    for one PS2 joystick.
+    2-Axis joystick.
+    Bluetooth / Serial interface.
+    I2C interface.
+    nRF24L01 interface.
+    Nokia 5110 LCD interface.
+    Interface connector.
+    Power switch to switch between 3.3 and 5V.

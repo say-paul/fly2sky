@@ -17,6 +17,17 @@ int I2C_SCL = 9;
 #define MOTOR4 3
 
 
+#define JOYSTICK_1_X A0
+#define JOYSTICK_1_Y A1
+
+#define JOYSTICK_DEADBAND 1
+
+#define ESC_MIN 1000
+#define ESC_MAX 2000
+
+
+#define SERVO_MIN -20
+#define SERVO_MAX 20
 
 // address mpu
 #define MPU_ADDRESS 0x68

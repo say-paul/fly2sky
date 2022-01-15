@@ -16,7 +16,7 @@ int I2C_SCL = 9;
 #define MOTOR3 2
 #define MOTOR4 3
 
-
+#define SERVO_DEFAULT_POS 100
 
 // address mpu
 #define MPU_ADDRESS 0x68
