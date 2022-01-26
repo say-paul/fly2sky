@@ -5,10 +5,9 @@
 
 
 RF24 radio(9, 10);
-const uint64_t pipe = [0xE8E8F0F0E1LL,0xC3C3C3C3C3LL];
+const uint64_t pipe = 0xE8E8F0F0E1LL;
 dataTx rData; 
 driveData dData,iData;
-
 
 void initiallizeRadio() {
     while(!radio.begin()) {
@@ -22,8 +21,12 @@ void initiallizeRadio() {
     radio.setDataRate(RF24_2MBPS);
     radio.setAutoAck(false);
     radio.openReadingPipe(1, pipe);
-    
+    radio.enableAckPayload();
+    radio.enableDynamicPayloads();
+    radio.writeAckPayload(1,&dData,sizeof(driveData));
+    radio.startListening();
 }
+
 void printData() {
     Serial.print(rData.imuTx.x,4);
     Serial.print(",");
@@ -46,14 +49,11 @@ void printData() {
 }
 
 void recieveData(){
-      // Start to listen
-    radio.startListening();
-    delay(10);
-    while (radio.available()) {        
+    if (radio.available()) {        
     radio.read(&rData, sizeof(dataTx));
+    radio.writeAckPayload(1,&dData,sizeof(driveData));
     printData();
   }
-  radio.stopListening();
 }
 
 void readJoyStick(driveData *data){
@@ -66,36 +66,19 @@ void mapServo(driveData *data) {
   data->y = map(data->y,0,660,SERVO_MIN,SERVO_MAX);
 }
 
-bool withinDeadBand(driveData *data) {
-  bool status = true;
+void DeadBand(driveData *data) {
   if (abs(data->x - iData.x) <= JOYSTICK_DEADBAND) {
     data->x = 0;
-  } else {
-    status = false;
-  }
+  } 
   if (abs(data->y - iData.y) <= JOYSTICK_DEADBAND) {
     data->y = 0;
-  } else {
-    status = false;
-  }
-  return status;
+  } 
 }
 
-void sendData() {
+void controlData() {
    readJoyStick(&dData);
    mapServo(&dData);
-   if (!withinDeadBand(&dData)) {
-   radio.openWritingPipe(pipe[1]);
-   radio.write(&dData,sizeof(driveData));
-   Serial.print(dData.x);
-   Serial.print(",");
-   Serial.print(dData.y);
-   Serial.println(""); 
-   } else {
-     Serial.print("within Dead Band");
-     Serial.println(""); 
-   }
-   
+   DeadBand(&dData); 
 }
 
 void setup() {
@@ -106,7 +89,8 @@ void setup() {
     readJoyStick(&iData);
     mapServo(&iData);
 }
+
 void loop() {
-    // recieveData();
-    sendData();
+    controlData();
+    recieveData();
 }

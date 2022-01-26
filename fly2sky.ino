@@ -58,6 +58,9 @@ void initiallizeRadio() {
     radio.setChannel(100);
     radio.setPALevel(RF24_PA_MAX);
     radio.setDataRate(RF24_2MBPS);
+    radio.enableAckPayload();
+    radio.openWritingPipe(pipe);
+    radio.setRetries(3,5); // delay, count
 }
 
 void readImu() {
@@ -103,9 +106,17 @@ bool readGPS() {
   return transmitData.valid;
 }
 
-void sendData() {
-    radio.openWritingPipe(pipe);
-    radio.write(&transmitData,sizeof(dataTx));
+bool sendData() {
+    bool status = radio.write(&transmitData,sizeof(dataTx));
+    Serial.println(status);
+    if ( radio.isAckPayloadAvailable() ) {
+			radio.read(&dData, sizeof(driveData));
+			Serial.println("Acknowledge received: ");
+      return true;
+		} else {
+      Serial.println("Acknowledge not received: ");
+    }
+    return false;
 }
 
 void ledControl() {
@@ -138,21 +149,6 @@ void FilterData() {
 void resetServo(){
   servoL.write(int(SERVO_DEFAULT_POS));
   servoR.write(int(SERVO_DEFAULT_POS));
-}
-
-bool recvData() {
-  bool status = false;
-  radio.openReadingPipe(0, pipe);
-  radio.startListening();
-
-    delay(10);
-    while (radio.available()) {        
-        radio.read(&dData, sizeof(driveData));
-        status = true;
-        Serial.printf("transmission recieved . \n");
-    }
-    radio.stopListening();
-  return status;
 }
 
 void driveMotor(driveData gc) {
@@ -209,11 +205,10 @@ void loop() {
     readImu();
     readBaro();
     FilterData();
-    if (recvData()){
+    if (sendData()){
       driveMotor(dData);
     } else {
       holdStable();
     }
-    sendData();
-    printData();
+    // printData();
 }
