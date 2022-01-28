@@ -29,6 +29,14 @@ int I2C_SCL = 9;
 #define SERVO_MIN -20
 #define SERVO_MAX 20
 
+
+#define A 2
+#define B 3
+#define C 4
+#define D 5
+#define E 6
+#define F 7
+
 // address mpu
 #define MPU_ADDRESS 0x68
 
@@ -45,6 +53,13 @@ struct driveData {
     int y;
     int z;
     int yr; //for head (r)otation / yaw
+    bool auxA;
+    bool auxB;
+    bool auxC;
+    bool auxD;
+    bool auxE;
+    bool auxF;
+
 };
 
 struct tuning {

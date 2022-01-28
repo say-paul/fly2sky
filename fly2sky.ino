@@ -17,9 +17,8 @@ RF24 radio(NRF240_CE_PIN, NRF240_CSN_PIN);
 imuData imuD;
 dataTx transmitData;
 driveData dData;
-driveData pState;
-Servo servoL;
-Servo servoR;
+Servo servoL,servoR;
+Servo bldcL,bldcR;
 
 // Address to devices comunicate each other (same in both)
 const uint64_t pipe = 0xE8E8F0F0E1LL;
@@ -27,7 +26,7 @@ const uint64_t pipe = 0xE8E8F0F0E1LL;
 int led = LED_BUILTIN; // the PWM pin the LED is attached to
 int brightness = 0;    // how bright the LED is
 int fadeAmount = 5;    // how many points to fade the LED by
-
+int SERVO_DEFAULT_POS =  90;
 
 void intiallizeImuBmp() {
 bool success = false;
@@ -58,9 +57,19 @@ void initiallizeRadio() {
     radio.setChannel(100);
     radio.setPALevel(RF24_PA_MAX);
     radio.setDataRate(RF24_2MBPS);
+    radio.setAutoAck(true);
     radio.enableAckPayload();
+    radio.enableDynamicPayloads();
+    radio.stopListening();
     radio.openWritingPipe(pipe);
-    radio.setRetries(3,5); // delay, count
+    // radio.setRetries(15,15); // delay, count
+}
+
+void intiallizeEsc() {
+      bldcL.attach(MOTOR1, MIN_PULSE_LENGTH, MAX_PULSE_LENGTH);
+      bldcR.attach(MOTOR2, MIN_PULSE_LENGTH, MAX_PULSE_LENGTH);
+      bldcL.write(0);
+      bldcR.write(0);
 }
 
 void readImu() {
@@ -107,30 +116,26 @@ bool readGPS() {
 }
 
 bool sendData() {
-    bool status = radio.write(&transmitData,sizeof(dataTx));
-    Serial.println(status);
-    if ( radio.isAckPayloadAvailable() ) {
-			radio.read(&dData, sizeof(driveData));
-			Serial.println("Acknowledge received: ");
-      return true;
-		} else {
-      Serial.println("Acknowledge not received: ");
+    if(radio.write(&transmitData,sizeof(dataTx))){
+          if ( radio.isAckPayloadAvailable() ) {
+            radio.read(&dData, sizeof(driveData));
+            // Serial.println("Acknowledge received: ");
+            printRxData();
+            return true;
+          } else {
+            // Serial.println("Acknowledge not received: ");
+          }
     }
+    blinkLed(100);
     return false;
 }
 
-void ledControl() {
+void blinkLed(unsigned long time) {
      // set the brightness
-  analogWrite(led, brightness);
-
-  // change the brightness for next time through the loop:
-  brightness = brightness + fadeAmount;
-
-  // reverse the direction of the fading at the ends of the fade:
-  if (brightness <= 0 || brightness >= 255) {
-    fadeAmount = -fadeAmount;
-  }
-  delay(30);
+  digitalWrite(led, !digitalRead(led));
+  delay(time);
+  digitalWrite(led, !digitalRead(led));
+  delay(time);
 }
 
 void FilterData() {
@@ -147,12 +152,11 @@ void FilterData() {
 }
 
 void resetServo(){
-  servoL.write(int(SERVO_DEFAULT_POS));
-  servoR.write(int(SERVO_DEFAULT_POS));
+  servoL.write(SERVO_DEFAULT_POS);
+  servoR.write(SERVO_DEFAULT_POS);
 }
 
 void driveMotor(driveData gc) {
-  Serial.printf("trigerring servo.. \n");
   servoL.write(int(SERVO_DEFAULT_POS)-gc.x);
   servoR.write(int(SERVO_DEFAULT_POS)+gc.x);
 }
@@ -178,10 +182,40 @@ void printData() {
     Serial.println("");
 }
 
+void printRxData(){
+  Serial.print(dData.x);
+  Serial.print(",");
+  Serial.print(dData.y);
+  Serial.print(",");
+  Serial.print(dData.z);
+  Serial.print(",");
+  Serial.print(dData.yr);
+  Serial.print(",");
+  Serial.print(dData.auxA);
+  Serial.print(",");
+  Serial.print(dData.auxB);
+  Serial.print(",");
+  Serial.print(dData.auxC);
+  Serial.print(",");
+  Serial.print(dData.auxD);
+  Serial.print(",");
+  Serial.print(dData.auxE);
+  Serial.print(",");
+  Serial.print(dData.auxF);
+  Serial.println("");
+
+}
 void holdStable() {
   resetServo();
 }
 
+void setDefaultservoAngle(int step) {
+  Serial.print("SREVO DEFAULT :");
+  Serial.print(SERVO_DEFAULT_POS);
+  Serial.println("");
+  SERVO_DEFAULT_POS += step;
+  resetServo();
+}
 void setup() {
     
     Serial.begin(115200);
@@ -195,6 +229,7 @@ void setup() {
     servoR.attach(SERVO2);
     intiallizeImuBmp();
     initiallizeRadio();
+    intiallizeEsc();
     resetServo();
     pinMode(led, OUTPUT);
     digitalWrite(led,HIGH);
@@ -209,6 +244,12 @@ void loop() {
       driveMotor(dData);
     } else {
       holdStable();
+    }
+    if (dData.auxB){
+      setDefaultservoAngle(5);
+    }
+    if (dData.auxD){
+      setDefaultservoAngle(-5);
     }
     // printData();
 }

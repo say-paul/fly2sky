@@ -16,7 +16,8 @@ int I2C_SCL = 9;
 #define MOTOR3 2
 #define MOTOR4 3
 
-#define SERVO_DEFAULT_POS 100
+#define MIN_PULSE_LENGTH 1000 // Minimum pulse length in µs
+#define MAX_PULSE_LENGTH 2400 // Maximum pulse length in µs
 
 // address mpu
 #define MPU_ADDRESS 0x68
@@ -29,6 +30,13 @@ struct driveData {
     int y;
     int z;
     int yr; //for head (r)otation / yaw
+    bool auxA;
+    bool auxB;
+    bool auxC;
+    bool auxD;
+    bool auxE;
+    bool auxF;
+
 };
 
 struct tuning {

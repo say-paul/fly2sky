@@ -19,12 +19,12 @@ void initiallizeRadio() {
     radio.setChannel(100);
     radio.setPALevel(RF24_PA_MAX);
     radio.setDataRate(RF24_2MBPS);
-    radio.setAutoAck(false);
-    radio.openReadingPipe(1, pipe);
+    radio.setAutoAck(true);
     radio.enableAckPayload();
     radio.enableDynamicPayloads();
-    radio.writeAckPayload(1,&dData,sizeof(driveData));
+    radio.openReadingPipe(1,pipe);
     radio.startListening();
+    radio.setRetries(15,15);
 }
 
 void printData() {
@@ -48,17 +48,51 @@ void printData() {
     Serial.println("");
 }
 
+void printTransmitData(){
+  Serial.print(dData.x);
+  Serial.print(",");
+  Serial.print(dData.y);
+  Serial.print(",");
+  Serial.print(dData.z);
+  Serial.print(",");
+  Serial.print(dData.yr);
+  Serial.print(",");
+  Serial.print(dData.auxA);
+  Serial.print(",");
+  Serial.print(dData.auxB);
+  Serial.print(",");
+  Serial.print(dData.auxC);
+  Serial.print(",");
+  Serial.print(dData.auxD);
+  Serial.print(",");
+  Serial.print(dData.auxE);
+  Serial.print(",");
+  Serial.print(dData.auxF);
+  Serial.println("");
+
+}
+
 void recieveData(){
-    if (radio.available()) {        
+    if (radio.available()) { 
+    radio.writeAckPayload(1,&dData,sizeof(driveData));   
     radio.read(&rData, sizeof(dataTx));
-    radio.writeAckPayload(1,&dData,sizeof(driveData));
-    printData();
   }
 }
 
 void readJoyStick(driveData *data){
   data->x = analogRead(JOYSTICK_1_X);
   data->y = analogRead(JOYSTICK_1_Y);
+  data->auxA = !digitalRead(A);
+  data->auxB = !digitalRead(B);
+  data->auxC = !digitalRead(C);
+  data->auxD = !digitalRead(D);
+  data->auxE = !digitalRead(E);
+  data->auxF = !digitalRead(F);
+
+}
+
+void tuning(driveData *data, int step) {
+  data->x = data->x+step;
 }
 
 void mapServo(driveData *data) {
@@ -81,11 +115,21 @@ void controlData() {
    DeadBand(&dData); 
 }
 
+void initiallizeInputs() {
+    pinMode(JOYSTICK_1_X,INPUT);
+    pinMode(JOYSTICK_1_Y,INPUT);
+    pinMode(A,INPUT_PULLUP);
+    pinMode(B,INPUT_PULLUP);
+    pinMode(C,INPUT_PULLUP);
+    pinMode(D,INPUT_PULLUP);
+    pinMode(E,INPUT_PULLUP);
+    pinMode(F,INPUT_PULLUP);
+}
 void setup() {
     Serial.begin(115200);
     initiallizeRadio();
-    pinMode(JOYSTICK_1_X,INPUT);
-    pinMode(JOYSTICK_1_Y,INPUT);
+    initiallizeInputs();
+
     readJoyStick(&iData);
     mapServo(&iData);
 }
@@ -93,4 +137,5 @@ void setup() {
 void loop() {
     controlData();
     recieveData();
+    printTransmitData();
 }
