@@ -26,8 +26,8 @@ int I2C_SCL = 9;
 #define ESC_MAX 2000
 
 
-#define SERVO_MIN -20
-#define SERVO_MAX 20
+#define SERVO_MIN -30
+#define SERVO_MAX 30
 
 
 #define A 2

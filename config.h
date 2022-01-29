@@ -26,10 +26,10 @@ int I2C_SCL = 9;
 // driveData units will be velocity(m/s) if data recived from onboard flight computer.
 // driveData units will be accleration(m/s^2) if data recieved from ground control.
 struct driveData {
-    int x;
-    int y;
-    int z;
-    int yr; //for head (r)otation / yaw
+    short int x;
+    short int y;
+    short int z;
+    short int yr; //for head (r)otation / yaw
     bool auxA;
     bool auxB;
     bool auxC;
