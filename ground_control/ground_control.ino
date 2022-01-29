@@ -45,6 +45,8 @@ void printData() {
     Serial.print(",");
     Serial.print(rData.sat);
     }
+    Serial.print(" ...  ");
+    printTransmitData();
     Serial.println("");
 }
 
@@ -73,8 +75,7 @@ void printTransmitData(){
 }
 
 void recieveData(){
-    if (radio.available()) { 
-    radio.writeAckPayload(1,&dData,sizeof(driveData));   
+    if (radio.available()) {    
     radio.read(&rData, sizeof(dataTx));
   }
 }
@@ -88,7 +89,7 @@ void readJoyStick(driveData *data){
   data->auxD = !digitalRead(D);
   data->auxE = !digitalRead(E);
   data->auxF = !digitalRead(F);
-
+  
 }
 
 void tuning(driveData *data, int step) {
@@ -112,7 +113,8 @@ void DeadBand(driveData *data) {
 void controlData() {
    readJoyStick(&dData);
    mapServo(&dData);
-   DeadBand(&dData); 
+   DeadBand(&dData);
+   radio.writeAckPayload(1,&dData,sizeof(driveData)); 
 }
 
 void initiallizeInputs() {
@@ -137,5 +139,5 @@ void setup() {
 void loop() {
     controlData();
     recieveData();
-    printTransmitData();
+    printData();
 }

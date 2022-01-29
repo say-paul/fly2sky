@@ -62,7 +62,7 @@ void initiallizeRadio() {
     radio.enableDynamicPayloads();
     radio.stopListening();
     radio.openWritingPipe(pipe);
-    // radio.setRetries(15,15); // delay, count
+    radio.setRetries(15,15); // delay, count
 }
 
 void intiallizeEsc() {
@@ -117,7 +117,7 @@ bool readGPS() {
 
 bool sendData() {
     if(radio.write(&transmitData,sizeof(dataTx))){
-          if ( radio.isAckPayloadAvailable() ) {
+          if ( radio.available() ) {
             radio.read(&dData, sizeof(driveData));
             // Serial.println("Acknowledge received: ");
             printRxData();
@@ -125,8 +125,9 @@ bool sendData() {
           } else {
             // Serial.println("Acknowledge not received: ");
           }
+    } else {
+      blinkLed(100);
     }
-    blinkLed(100);
     return false;
 }
 
