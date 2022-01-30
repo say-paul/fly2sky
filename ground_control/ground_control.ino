@@ -25,7 +25,7 @@ void initiallizeRadio() {
     radio.enableDynamicPayloads();
     radio.stopListening();
     radio.openWritingPipe(pipe);
-    radio.setRetries(15,15); // delay, count
+    // radio.setRetries(15,15); // delay, count
 }
 
 void printData() {

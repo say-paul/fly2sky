@@ -121,10 +121,10 @@ bool recieveData(){
   if (radio.available()) {
     lastTransmission = micros();    
     radio.read(&dData,sizeof(driveData));
-    printRxData();
+    // printRxData();
     return true;
   }
-  if (micros()-lastTransmission >= 100000 ) {
+  if (micros()-lastTransmission >= RADIO_TIMEOUT ) {
     blinkLed(50);
   }
   return false;

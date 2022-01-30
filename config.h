@@ -21,7 +21,7 @@ int I2C_SCL = 9;
 
 // address mpu
 #define MPU_ADDRESS 0x68
-
+#define RADIO_TIMEOUT 250000 //in microsec converts to 250 millisec
 
 // driveData units will be velocity(m/s) if data recived from onboard flight computer.
 // driveData units will be accleration(m/s^2) if data recieved from ground control.
