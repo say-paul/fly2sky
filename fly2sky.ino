@@ -22,6 +22,7 @@ Servo bldcL,bldcR;
 
 // Address to devices comunicate each other (same in both)
 const uint64_t pipe = 0xE8E8F0F0E1LL;
+unsigned long lastTransmission;
 
 int led = LED_BUILTIN; // the PWM pin the LED is attached to
 int brightness = 0;    // how bright the LED is
@@ -56,13 +57,13 @@ void initiallizeRadio() {
     delay(100);
     radio.setChannel(100);
     radio.setPALevel(RF24_PA_MAX);
-    radio.setDataRate(RF24_2MBPS);
+    radio.setDataRate(RF24_250KBPS);
     radio.setAutoAck(true);
     radio.enableAckPayload();
     radio.enableDynamicPayloads();
-    radio.stopListening();
-    radio.openWritingPipe(pipe);
-    radio.setRetries(15,15); // delay, count
+    radio.openReadingPipe(1,pipe);
+    radio.startListening();
+    radio.setRetries(15,15);
 }
 
 void intiallizeEsc() {
@@ -115,20 +116,18 @@ bool readGPS() {
   return transmitData.valid;
 }
 
-bool sendData() {
-    if(radio.write(&transmitData,sizeof(dataTx))){
-          if ( radio.available() ) {
-            radio.read(&dData, sizeof(driveData));
-            // Serial.println("Acknowledge received: ");
-            printRxData();
-            return true;
-          } else {
-            // Serial.println("Acknowledge not received: ");
-          }
-    } else {
-      blinkLed(100);
-    }
-    return false;
+bool recieveData(){
+  radio.writeAckPayload(1,&transmitData,sizeof(dataTx)); 
+  if (radio.available()) {
+    lastTransmission = micros();    
+    radio.read(&dData,sizeof(driveData));
+    printRxData();
+    return true;
+  }
+  if (micros()-lastTransmission >= 100000 ) {
+    blinkLed(50);
+  }
+  return false;
 }
 
 void blinkLed(unsigned long time) {
@@ -241,7 +240,7 @@ void loop() {
     readImu();
     readBaro();
     FilterData();
-    if (sendData()){
+    if (recieveData()){
       driveMotor(dData);
     } else {
       holdStable();

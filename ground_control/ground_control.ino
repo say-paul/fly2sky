@@ -8,6 +8,7 @@ RF24 radio(9, 10);
 const uint64_t pipe = 0xE8E8F0F0E1LL;
 dataTx rData; 
 driveData dData,iData;
+unsigned long timer;
 
 void initiallizeRadio() {
     while(!radio.begin()) {
@@ -18,13 +19,13 @@ void initiallizeRadio() {
     delay(100);
     radio.setChannel(100);
     radio.setPALevel(RF24_PA_MAX);
-    radio.setDataRate(RF24_2MBPS);
+    radio.setDataRate(RF24_250KBPS);
     radio.setAutoAck(true);
     radio.enableAckPayload();
     radio.enableDynamicPayloads();
-    radio.openReadingPipe(1,pipe);
-    radio.startListening();
-    radio.setRetries(15,15);
+    radio.stopListening();
+    radio.openWritingPipe(pipe);
+    radio.setRetries(15,15); // delay, count
 }
 
 void printData() {
@@ -74,22 +75,28 @@ void printTransmitData(){
 
 }
 
-void recieveData(){
-    if (radio.available()) {    
-    radio.read(&rData, sizeof(dataTx));
-  }
+bool recieveData() {
+    if(radio.write(&dData, sizeof(driveData))){
+          if (radio.available()) {
+            radio.read(&rData, sizeof(dataTx));
+            // Serial.println("Acknowledge received: ");
+            return true;
+          }
+    }
+    return false;
 }
 
-void readJoyStick(driveData *data){
+void readJoyStick(driveData *data) {
   data->x = analogRead(JOYSTICK_1_X);
   data->y = analogRead(JOYSTICK_1_Y);
+  data->z = analogRead(JOYSTICK_2_X);
+  data->yr = analogRead(JOYSTICK_2_Y);
   data->auxA = !digitalRead(A);
   data->auxB = !digitalRead(B);
   data->auxC = !digitalRead(C);
   data->auxD = !digitalRead(D);
   data->auxE = !digitalRead(E);
   data->auxF = !digitalRead(F);
-  
 }
 
 void tuning(driveData *data, int step) {
@@ -99,6 +106,8 @@ void tuning(driveData *data, int step) {
 void mapServo(driveData *data) {
   data->x = map(data->x,0,660,SERVO_MIN,SERVO_MAX);
   data->y = map(data->y,0,660,SERVO_MIN,SERVO_MAX);
+  data->z = map(data->z,660,0,SERVO_MIN,SERVO_MAX);
+  data->yr = map(data->yr,660,0,SERVO_MIN,SERVO_MAX);
 }
 
 void DeadBand(driveData *data) {
@@ -107,6 +116,12 @@ void DeadBand(driveData *data) {
   } 
   if (abs(data->y - iData.y) <= JOYSTICK_DEADBAND) {
     data->y = 0;
+  }
+  if (abs(data->z - iData.x) <= JOYSTICK_DEADBAND) {
+    data->z = 0;
+  } 
+  if (abs(data->yr - iData.y) <= JOYSTICK_DEADBAND) {
+    data->yr = 0;
   } 
 }
 
@@ -114,12 +129,13 @@ void controlData() {
    readJoyStick(&dData);
    mapServo(&dData);
    DeadBand(&dData);
-   radio.writeAckPayload(1,&dData,sizeof(driveData)); 
 }
 
 void initiallizeInputs() {
     pinMode(JOYSTICK_1_X,INPUT);
     pinMode(JOYSTICK_1_Y,INPUT);
+    pinMode(JOYSTICK_2_X,INPUT);
+    pinMode(JOYSTICK_2_Y,INPUT);
     pinMode(A,INPUT_PULLUP);
     pinMode(B,INPUT_PULLUP);
     pinMode(C,INPUT_PULLUP);
@@ -127,6 +143,7 @@ void initiallizeInputs() {
     pinMode(E,INPUT_PULLUP);
     pinMode(F,INPUT_PULLUP);
 }
+
 void setup() {
     Serial.begin(115200);
     initiallizeRadio();
@@ -137,7 +154,9 @@ void setup() {
 }
 
 void loop() {
+    timer = micros();
     controlData();
     recieveData();
-    printData();
+    // printData();
+    Serial.println(micros()-timer);
 }

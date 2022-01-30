@@ -16,11 +16,13 @@ int I2C_SCL = 9;
 #define MOTOR3 2
 #define MOTOR4 3
 
+#define JOYSTICK_1_Y A0
+#define JOYSTICK_1_X A1
+#define JOYSTICK_2_Y A3
+#define JOYSTICK_2_X A2
 
-#define JOYSTICK_1_X A0
-#define JOYSTICK_1_Y A1
 
-#define JOYSTICK_DEADBAND 1
+#define JOYSTICK_DEADBAND 2
 
 #define ESC_MIN 1000
 #define ESC_MAX 2000
