@@ -9,12 +9,11 @@
 #define NRF240_CSN_PIN 17
 int I2C_SDA  = 8;
 int I2C_SCL = 9;
-#define SERVO1 6
-#define SERVO2 7
-#define MOTOR1 0
-#define MOTOR2 1
-#define MOTOR3 2
-#define MOTOR4 3
+#define STEPPER1 6
+#define STEPPER2 7
+#define BLDC1 0
+#define BLDC2 1
+
 
 #define MIN_PULSE_LENGTH 1000 // Minimum pulse length in µs
 #define MAX_PULSE_LENGTH 2400 // Maximum pulse length in µs
